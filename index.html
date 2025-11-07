@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🎅 クリスマスクイズ 2025 ❄️</title>
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      font-family: 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+      background: radial-gradient(circle at top, #0b1d39 0%, #031029 100%);
+      overflow: hidden;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+    }
+
+    /* 雪のCanvasを背景に */
+    canvas#snow {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 20px;
+      box-shadow: 0 0 25px rgba(255,255,255,0.4);
+      padding: 40px 50px;
+      text-align: center;
+      backdrop-filter: blur(8px);
+      animation: fadeIn 1s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.9); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    h1 {
+      color: #ffeb3b;
+      text-shadow: 0 0 10px #fff, 0 0 20px #f44336;
+      margin-bottom: 20px;
+    }
+
+    p {
+      font-size: 18px;
+    }
+
+    input[type="text"] {
+      padding: 10px;
+      width: 80%;
+      border: 2px solid #ffeb3b;
+      border-radius: 10px;
+      font-size: 16px;
+      outline: none;
+      background: rgba(255,255,255,0.9);
+      color: #000;
+    }
+
+    button {
+      background: linear-gradient(45deg, #e53935, #43a047);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      padding: 12px 25px;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 15px;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 20px rgba(255,255,255,0.6);
+    }
+
+    img {
+      margin-top: 20px;
+      width: 180px;
+      display: none;
+    }
+
+    .fade-in {
+      animation: fadeIn 1s ease forwards;
+    }
+
+    /* 正解アニメーション（星がキラッと） */
+    .sparkle {
+      animation: sparkle 1.2s ease-out forwards;
+    }
+
+    @keyframes sparkle {
+      0% { text-shadow: 0 0 0px #fff; }
+      50% { text-shadow: 0 0 15px #fff, 0 0 30px #f44336; }
+      100% { text-shadow: 0 0 5px #fff; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="snow"></canvas>
+
+  <div class="container">
+    <h1>🎄 クリスマスクイズ 🎅</h1>
+    <p>サンタ・ツリー・雪だるま のいずれかを入力してね！</p>
+    <input type="text" id="answer" placeholder="ここに入力">
+    <br>
+    <button onclick="checkAnswer()">送信</button>
+    <div id="result"></div>
+    <img id="resultImage" src="" alt="結果画像">
+  </div>
+
+  <audio id="bgm" loop>
+    <source src="https://cdn.pixabay.com/audio/2022/12/07/audio_89d4ef6a77.mp3" type="audio/mpeg">
+  </audio>
+
+  <script>
+    // --- クイズ処理 ---
+    function checkAnswer() {
+      const input = document.getElementById('answer').value.trim();
+      const img = document.getElementById('resultImage');
+      const result = document.getElementById('result');
+      const bgm = document.getElementById('bgm');
+
+      const answers = {
+        'サンタ': 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/89/Santa_Claus.png/600px-Santa_Claus.png',
+        'ツリー': 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Christmas_tree.png/600px-Christmas_tree.png',
+        '雪だるま': 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/35/Snowman_icon.png/600px-Snowman_icon.png'
+      };
+
+      if (answers[input]) {
+        img.src = answers[input];
+        img.style.display = 'block';
+        img.className = 'fade-in';
+        result.innerText = `🎁「${input}」を選びました！🎁`;
+        result.className = 'sparkle';
+        bgm.play();
+      } else {
+        img.style.display = 'none';
+        result.innerText = '🎅 うーん、違うみたい。もう一度！';
+        result.className = '';
+      }
+    }
+
+    // --- 雪アニメーション ---
+    const canvas = document.getElementById('snow');
+    const ctx = canvas.getContext('2d');
+    let snowflakes = [];
+
+    function resize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    function createSnowflakes() {
+      const x = Math.random() * canvas.width;
+      const y = Math.random() * canvas.height;
+      const radius = Math.random() * 3 + 1;
+      const speed = Math.random() * 1 + 0.3;
+      snowflakes.push({x, y, radius, speed});
+    }
+
+    function drawSnowflakes() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
+      ctx.beginPath();
+      for (let flake of snowflakes) {
+        ctx.moveTo(flake.x, flake.y);
+        ctx.arc(flake.x, flake.y, flake.radius, 0, Math.PI * 2);
+      }
+      ctx.fill();
+      updateSnowflakes();
+    }
+
+    function updateSnowflakes() {
+      for (let flake of snowflakes) {
+        flake.y += flake.speed;
+        flake.x += Math.sin(flake.y / 20) * 0.5;
+        if (flake.y > canvas.height) {
+          flake.y = 0;
+          flake.x = Math.random() * canvas.width;
+        }
+      }
+    }
+
+    function loop() {
+      drawSnowflakes();
+      requestAnimationFrame(loop);
+    }
+
+    for (let i = 0; i < 150; i++) createSnowflakes();
+    loop();
+  </script>
+</body>
+</html>
