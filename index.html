@@ -18,7 +18,6 @@
       flex-direction: column;
     }
 
-    /* 雪のCanvasを背景に */
     canvas#snow {
       position: fixed;
       top: 0;
@@ -84,17 +83,23 @@
       box-shadow: 0 0 20px rgba(255,255,255,0.6);
     }
 
-    img {
-      margin-top: 20px;
-      width: 180px;
+    img#resultImage {
       display: none;
     }
 
-    .fade-in {
-      animation: fadeIn 1s ease forwards;
+    /* 全画面画像表示用 */
+    .fullscreen-image {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      z-index: 10;
+      background: rgba(0,0,0,0.8);
+      animation: fadeIn 1s ease-out;
     }
 
-    /* 正解アニメーション（星がキラッと） */
     .sparkle {
       animation: sparkle 1.2s ease-out forwards;
     }
@@ -109,41 +114,53 @@
 <body>
   <canvas id="snow"></canvas>
 
-  <div class="container">
+  <div class="container" id="quizContainer">
     <h1>🎄 クリスマスクイズ 🎅</h1>
     <p>サンタ・ツリー・雪だるま のいずれかを入力してね！</p>
     <input type="text" id="answer" placeholder="ここに入力">
     <br>
     <button onclick="checkAnswer()">送信</button>
     <div id="result"></div>
-    <img id="resultImage" src="" alt="結果画像">
   </div>
 
-  <audio id="bgm" loop>
-    <source src="https://cdn.pixabay.com/audio/2022/12/07/audio_89d4ef6a77.mp3" type="audio/mpeg">
+  <!-- 結果画像（全画面用） -->
+  <img id="resultImage" src="" alt="結果画像">
+
+  <!-- BGM（ユーザー操作後に再生可能） -->
+  <audio id="bgm" loop preload="auto">
+    <source src="https://cdn.pixabay.com/download/audio/2022/12/07/audio_89d4ef6a77.mp3?filename=jingle-bells-christmas-131480.mp3" type="audio/mpeg">
   </audio>
 
   <script>
-    // --- クイズ処理 ---
+    // ======== クイズ処理 ==========
     function checkAnswer() {
       const input = document.getElementById('answer').value.trim();
       const img = document.getElementById('resultImage');
       const result = document.getElementById('result');
       const bgm = document.getElementById('bgm');
+      const container = document.getElementById('quizContainer');
 
       const answers = {
-        'サンタ': 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/89/Santa_Claus.png/600px-Santa_Claus.png',
-        'ツリー': 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Christmas_tree.png/600px-Christmas_tree.png',
-        '雪だるま': 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/35/Snowman_icon.png/600px-Snowman_icon.png'
+        'サンタ': 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/89/Santa_Claus.png/800px-Santa_Claus.png',
+        'ツリー': 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Christmas_tree.png/800px-Christmas_tree.png',
+        '雪だるま': 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/35/Snowman_icon.png/800px-Snowman_icon.png'
       };
 
       if (answers[input]) {
         img.src = answers[input];
+        img.className = 'fullscreen-image';
         img.style.display = 'block';
-        img.className = 'fade-in';
         result.innerText = `🎁「${input}」を選びました！🎁`;
         result.className = 'sparkle';
-        bgm.play();
+
+        // BGMを再生（※ユーザー操作後に許可される）
+        bgm.play().catch(()=>{ console.log('BGM再生はユーザー操作が必要です'); });
+
+        // 3秒後に画像を閉じる
+        setTimeout(() => {
+          img.style.display = 'none';
+        }, 3000);
+
       } else {
         img.style.display = 'none';
         result.innerText = '🎅 うーん、違うみたい。もう一度！';
@@ -151,10 +168,11 @@
       }
     }
 
-    // --- 雪アニメーション ---
+    // ======== 雪アニメーション ==========
     const canvas = document.getElementById('snow');
     const ctx = canvas.getContext('2d');
     let snowflakes = [];
+    let mouseX = 0;
 
     function resize() {
       canvas.width = window.innerWidth;
@@ -163,13 +181,22 @@
     window.addEventListener('resize', resize);
     resize();
 
+    // 雪生成
     function createSnowflakes() {
-      const x = Math.random() * canvas.width;
-      const y = Math.random() * canvas.height;
-      const radius = Math.random() * 3 + 1;
-      const speed = Math.random() * 1 + 0.3;
-      snowflakes.push({x, y, radius, speed});
+      for (let i = 0; i < 200; i++) {
+        snowflakes.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          radius: Math.random() * 3 + 1,
+          speed: Math.random() * 1 + 0.5
+        });
+      }
     }
+
+    // マウス追従効果
+    window.addEventListener('mousemove', (e) => {
+      mouseX = e.clientX;
+    });
 
     function drawSnowflakes() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -185,8 +212,10 @@
 
     function updateSnowflakes() {
       for (let flake of snowflakes) {
+        // マウス位置に少し吸い寄せられる動き
+        const dx = (mouseX - flake.x) * 0.002;
+        flake.x += dx;
         flake.y += flake.speed;
-        flake.x += Math.sin(flake.y / 20) * 0.5;
         if (flake.y > canvas.height) {
           flake.y = 0;
           flake.x = Math.random() * canvas.width;
@@ -199,8 +228,9 @@
       requestAnimationFrame(loop);
     }
 
-    for (let i = 0; i < 150; i++) createSnowflakes();
+    createSnowflakes();
     loop();
   </script>
 </body>
 </html>
+
